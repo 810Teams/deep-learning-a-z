@@ -23,12 +23,16 @@ y = dataset.iloc[:, 13].values
 
 # Encoding categorical data
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-labelencoder_X_1 = LabelEncoder()
-X[:, 1] = labelencoder_X_1.fit_transform(X[:, 1])
+from sklearn.compose import ColumnTransformer
+
 labelencoder_X_2 = LabelEncoder()
 X[:, 2] = labelencoder_X_2.fit_transform(X[:, 2])
-onehotencoder = OneHotEncoder(categorical_features = [1])
-X = onehotencoder.fit_transform(X).toarray()
+
+ct = ColumnTransformer(
+    [('one_hot_encoder', OneHotEncoder(categories='auto'), [1])],
+    remainder='passthrough'                                         
+)
+X = ct.fit_transform(X)
 X = X[:, 1:]
 
 # Splitting the dataset into the Training set and Test set
@@ -75,3 +79,24 @@ y_pred = (y_pred > 0.5)
 # Making the Confusion Matrix
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
+
+# -- Homework -- #
+
+y_new = classifier.predict(sc.transform(np.array([
+    [
+         0.0,   # is Germany
+         0.0,   # is Spain
+         600,   # CreditScore
+         1,     # Gender (is Male)
+         40,    # Age
+         3,     # Tenure
+         60000, # Balance
+         2,     # NumOfProducts
+         1,     # HasCrCard
+         1,     # isActiveMember
+         50000, # EstimatedSalary
+    ]
+])))
+
+
+y_new = (y_new > 0.5)
