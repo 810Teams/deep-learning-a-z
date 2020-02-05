@@ -9,7 +9,7 @@
 # Installing Keras
 # pip install --upgrade keras
 
-# Part 1 - Data Preprocessing
+# %% Part 1 - Data Preprocessing
 
 # Importing the libraries
 import numpy as np
@@ -23,12 +23,16 @@ y = dataset.iloc[:, 13].values
 
 # Encoding categorical data
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-labelencoder_X_1 = LabelEncoder()
-X[:, 1] = labelencoder_X_1.fit_transform(X[:, 1])
+from sklearn.compose import ColumnTransformer
+
 labelencoder_X_2 = LabelEncoder()
 X[:, 2] = labelencoder_X_2.fit_transform(X[:, 2])
-onehotencoder = OneHotEncoder(categorical_features = [1])
-X = onehotencoder.fit_transform(X).toarray()
+
+ct = ColumnTransformer(
+    [('one_hot_encoder', OneHotEncoder(categories='auto'), [1])],
+    remainder='passthrough'                                         
+)
+X = ct.fit_transform(X)
 X = X[:, 1:]
 
 # Splitting the dataset into the Training set and Test set
@@ -41,7 +45,7 @@ sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-# Part 2 - Now let's make the ANN!
+# %% Part 2 - Now let's make the ANN!
 
 # Importing the Keras libraries and packages
 import keras
@@ -69,14 +73,15 @@ classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = [
 # Fitting the ANN to the Training set
 classifier.fit(X_train, y_train, batch_size = 10, epochs = 100)
 
-# Part 3 - Making predictions and evaluating the model
+# %% Part 3 - Making predictions and evaluating the model
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
 y_pred = (y_pred > 0.5)
 
 # Predicting a single new observation
-"""Predict if the customer with the following informations will leave the bank:
+"""
+Predict if the customer with the following informations will leave the bank:
 Geography: France
 Credit Score: 600
 Gender: Male
@@ -86,7 +91,8 @@ Balance: 60000
 Number of Products: 2
 Has Credit Card: Yes
 Is Active Member: Yes
-Estimated Salary: 50000"""
+Estimated Salary: 50000
+"""
 new_prediction = classifier.predict(sc.transform(np.array([[0.0, 0, 600, 1, 40, 3, 60000, 2, 1, 1, 50000]])))
 new_prediction = (new_prediction > 0.5)
 
@@ -94,7 +100,7 @@ new_prediction = (new_prediction > 0.5)
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
 
-# Part 4 - Evaluating, Improving and Tuning the ANN
+# %% Part 4.1 - Evaluating and Improving the ANN
 
 # Evaluating the ANN
 from keras.wrappers.scikit_learn import KerasClassifier
@@ -116,6 +122,7 @@ variance = accuracies.std()
 # Improving the ANN
 # Dropout Regularization to reduce overfitting if needed
 
+# %% Part 4.2 - Tuning the ANN
 # Tuning the ANN
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import GridSearchCV
