@@ -68,7 +68,7 @@ regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
 regressor.fit(X_train, y_train, epochs = 100, batch_size = 32)
 
 # Save model
-regressor.save('model.h5')
+regressor.save('models/model.h5')
 
 
 # Part 3 - Making the predictions and visualising the results
