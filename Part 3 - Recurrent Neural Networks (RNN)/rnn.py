@@ -1,14 +1,20 @@
 # Recurrent Neural Network
 
+
+# Part 0 - Global values
+
 def convert(data):
     data = data.tolist()
-
+    
     for i in range(len(data)):
         for j in range(len(data[i])):
             if isinstance(data[i][j], str):
                 data[i][j] = float(data[i][j].replace(',', ''))
-    
+                
     return np.array(data)
+
+TIMESTEPS = 60
+
 
 # Part 1 - Data Preprocessing
 
@@ -33,8 +39,8 @@ training_set_scaled = scaler.fit_transform(training_set)
 X_train = list()
 y_train = list()
 
-for i in range(60, len(dataset_train)):
-    X_train.append(training_set_scaled[i - 60:i, :])
+for i in range(TIMESTEPS, len(dataset_train)):
+    X_train.append(training_set_scaled[i - TIMESTEPS:i, :])
     y_train.append(training_set_scaled[i, :])
 del i
     
@@ -85,14 +91,13 @@ from keras.models import load_model
 
 try:
     # Load model
-    regressor = load_model('models/model.h5')
+    regressor = load_model('models/model_5_inputs.h5')
 except OSError:
     # Fitting the RNN to the Training set
     regressor.fit(X_train, y_train, epochs = 100, batch_size = 32)
-    regressor.save('models/model_5_inputs.h5')
     
     # Save model
-    regressor.save('models/model.h5')
+    regressor.save('models/model_5_inputs.h5')
 
 
 # Part 3 - Making the predictions and visualising the results
@@ -109,15 +114,14 @@ dataset_total = pd.concat((dataset_train.iloc[:, 1:], dataset_test.iloc[:, 1:]),
 inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
 inputs = convert(inputs)
 inputs = scaler.transform(inputs)
-inputs = np.reshape(inputs, (inputs.shape[0], -1, inputs.shape[1]))
 
-X_test = []
-for i in range(60, 80):
-    X_test.append(inputs[i - 60:i, 0]) 
+X_test = list()
+
+for i in range(TIMESTEPS, 80):
+    X_test.append(inputs[i - TIMESTEPS:i, :]) 
 del i
     
 X_test = np.array(X_test)
-X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
 
 predicted_stock_price = regressor.predict(X_test)
 predicted_stock_price = scaler.inverse_transform(predicted_stock_price)
