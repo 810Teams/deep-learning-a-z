@@ -14,6 +14,7 @@ def convert(data):
     return np.array(data)
 
 TIMESTEPS = 60
+PREDICT_ALL_AT_ONCE = False
 
 
 # Part 1 - Data Preprocessing
@@ -45,9 +46,6 @@ for i in range(TIMESTEPS, len(dataset_train)):
 del i
     
 X_train, y_train = np.array(X_train), np.array(y_train)
-
-# Reshaping
-# X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
 
 
 # Part 2 - Building the RNN
@@ -110,24 +108,46 @@ real_stock_price = dataset_test.iloc[:, 1:].values
 real_stock_price = convert(real_stock_price)
 
 # Getting the predicted stock price of 2017
-dataset_total = pd.concat((dataset_train.iloc[:, 1:], dataset_test.iloc[:, 1:]), axis = 0)
-inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
-inputs = convert(inputs)
-inputs = scaler.transform(inputs)
-
-X_test = list()
-
-for i in range(TIMESTEPS, 80):
-    X_test.append(inputs[i - TIMESTEPS:i, :]) 
-del i
+if not PREDICT_ALL_AT_ONCE:
+    dataset_total = pd.concat((dataset_train.iloc[:, 1:], dataset_test.iloc[:, 1:]), axis = 0)
+    inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
+    inputs = convert(inputs)
+    inputs = scaler.transform(inputs)
     
-X_test = np.array(X_test)
+    X_test = list()
+    
+    for i in range(TIMESTEPS, 80):
+        X_test.append(inputs[i - TIMESTEPS:i, :]) 
+    del dataset_total, inputs, i
+        
+    X_test = np.array(X_test)
+    
+    predicted_stock_price = regressor.predict(X_test)
+else:
+    dataset_total = dataset_train.iloc[:, 1:]
+    inputs = dataset_total[len(dataset_total) - 60:].values
+    inputs = convert(inputs)
+    inputs = scaler.transform(inputs)
+    
+    predicted_stock_price = list()
+    
+    for i in range(TIMESTEPS, 80):
+        predicted_stock_price.append(
+            regressor.predict(inputs.reshape(1, inputs.shape[0], inputs.shape[1]))
+        )
+        inputs = np.concatenate((inputs, predicted_stock_price[-1]), axis=0)[1:,:]
+    del dataset_total, inputs, i
+    
+    predicted_stock_price = np.array(predicted_stock_price)
+    predicted_stock_price = predicted_stock_price.reshape(
+        predicted_stock_price.shape[0],
+        predicted_stock_price.shape[2]
+    )
+    
+predicted_stock_price = scaler.inverse_transform(predicted_stock_price)  
 
-predicted_stock_price = regressor.predict(X_test)
-predicted_stock_price = scaler.inverse_transform(predicted_stock_price)
-
-plt.plot(real_stock_price[:,0], color = 'red', label = 'Real Google Stock Price')
-plt.plot(predicted_stock_price[:,0], color = 'blue', label = 'Predicted Google Stock Price')
+plt.plot(real_stock_price[:, 0], color = 'red', label = 'Real Google Stock Price')
+plt.plot(predicted_stock_price[:, 0], color = 'blue', label = 'Predicted Google Stock Price')
 plt.title('Google Stock Price Prediction')
 plt.xlabel('Time')
 plt.ylabel('Google Stock Price')
