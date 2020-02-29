@@ -83,14 +83,13 @@ optimizer = optim.RMSprop(sae.parameters(), lr=0.01, weight_decay=0.5)
 
 
 # Training
-nb_epochs = 200
+nb_epochs = 500
 
 for epoch in range(1, nb_epochs + 1):
     train_loss = list()
     
     for id_user in range(nb_users):
-        inp = Variable(training_set[id_user]).unsqueeze(0)
-        # inp = torch.FloatTensor([training_set[id_user].tolist()])
+        inp = torch.FloatTensor([training_set[id_user].tolist()])
         target = inp.clone()
         
         if torch.sum(target.data > 0) > 0:
